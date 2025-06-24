@@ -10,7 +10,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     if (argc == 1) {
-        cout << "An interpreter for brainf**k" << "\n";
+        cout << "An interpreter for brainfuck" << "\n";
         cout << "Usage:" << "\n";
         cout << "BRAINF <file>" << "\n";
         cout << "\n";
