@@ -33,14 +33,14 @@ int main(int argc, char *argv[]) {
         cout << "-c <destination> - Compiles <file> to C++ and outputs it to <destinaton>" << "\n";
         return 0;
     } else if (!filesystem::exists(argv[1])) {
-        cerr << "Specified source file doesn't exist";
+        cerr << "Specified source file doesn't exist\n";
         return 1;
     } else if (filesystem::is_directory(argv[1])) {
-        cerr << "Specified source file is a directory";
+        cerr << "Specified source file is a directory\n";
         return 2;
     } else if ((argc >= 4) and (strcmp(argv[2], "-c") == 0)) {
         if (filesystem::is_directory(argv[3])) {
-            cerr << "Specified destination file is a directory";
+            cerr << "Specified destination file is a directory\n";
             return 3;
         }
         compilerMode = true;
@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
     uint16_t nextLoopId = 0;
     uint16_t loopIds[__UINT16_MAX__ + 1];
     uint16_t loopIdPtr = 0;
+    bool loopLimitReached = false;
 
     if (compilerMode) {
         out.open(argv[3]);
@@ -156,8 +157,16 @@ int main(int argc, char *argv[]) {
 
             case '[':
                 if (compilerMode) {
+                    if (loopLimitReached) {
+                        cerr << "Too many loops\n";
+                        cerr << "When compiling, there can be up to " + to_string(UINT16_MAX + 1) + "loops.\n";
+                        return 6;
+                    }
                     uint16_t x = nextLoopId;
                     nextLoopId++;
+                    if (nextLoopId == 0) {
+                        loopLimitReached = true;
+                    }
                     out << "LoopStart" + to_string(x) + ":\n";
                     loopIds[loopIdPtr] = x;
                     loopIdPtr++;
@@ -182,7 +191,7 @@ int main(int argc, char *argv[]) {
                         } else if (instruction == '[') {
                             nested++;
                         } else if (instruction == EOF) {
-                            cerr << "Missing loop end";
+                            cerr << "Missing loop end\n";
                             return 4;
                         }
                     }
@@ -194,6 +203,10 @@ int main(int argc, char *argv[]) {
 
             case ']': {
                 if (compilerMode) {
+                    if (loopIdPtr == 0) {
+                        cerr << "Missing loop start\n";
+                        return 7;
+                    }
                     loopIdPtr--;
                     uint16_t x = loopIds[loopIdPtr];
                     out << "log(\"returned back to loop\\n\");\n";
@@ -205,12 +218,12 @@ int main(int argc, char *argv[]) {
                 while (true) {
                     in.unget();
                     if (in.fail()) {
-                        cerr << "Missing loop start";
+                        cerr << "Missing loop start\n";
                         return 5;
                     }
                     in.unget();
                     if (in.fail()) {
-                        cerr << "Missing loop start";
+                        cerr << "Missing loop start\n";
                         return 5;
                     }
                     instruction = in.get();
